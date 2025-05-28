@@ -25,7 +25,16 @@ const runMigration = async () => {
     
     for (const query of queries) {
       if (query.trim()) {
-        await connection.query(query);
+        try {
+          await connection.query(query);
+        } catch (error) {
+          // Ignorer l'erreur si la table existe déjà
+          if (error.code === 'ER_TABLE_EXISTS_ERROR') {
+            console.log('Table already exists, continuing...');
+            continue;
+          }
+          throw error;
+        }
       }
     }
     

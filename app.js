@@ -33,6 +33,9 @@ const startServer = async () => {
   }
 };
 
-startServer();
+// Ne démarrer le serveur que si nous ne sommes pas en mode test
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
 module.exports = app;

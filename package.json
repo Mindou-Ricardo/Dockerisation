@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest",
+    "test:watch": "jest --watch",
     "build": "npm run build:prod",
     "build:prod": "babel src -d dist"
   },

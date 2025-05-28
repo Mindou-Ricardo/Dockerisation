@@ -67,8 +67,24 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.yml down -v --remove-orphans
 
+      - name: Create dist directory
+        run: mkdir -p dist
+
+      - name: Copy source files
+        run: |
+          cp -r app.js dist/
+          cp -r routes dist/
+          cp -r models dist/
+          cp -r controllers dist/
+          cp -r config dist/
+          cp package.json dist/
+          cp package-lock.json dist/
+
       - name: Build application
-        run: npm run build || true
+        run: |
+          cd dist
+          npm ci --production
+          cd ..
 
       - name: Security audit
         run: npm audit || true
@@ -77,4 +93,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: dist/
+          path: |
+            dist/
+            docker-compose.yml
+            Dockerfile
+            init.sql

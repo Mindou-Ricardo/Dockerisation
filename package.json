@@ -15,7 +15,7 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "build": "npm run build:prod",
-    "build:prod": "babel src -d dist"
+    "build:prod": "babel . -d dist --ignore node_modules,__tests__,dist"
   },
   "author": "Ricardo",
   "license": "ISC",

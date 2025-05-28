@@ -15,7 +15,7 @@ async function getProducts() {
 async function getProductById(id) {
   try {
     const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
-    return rows[0];
+    return rows[0] || null;
   } catch (err) {
     process.stderr.write(`Error querying product by ID: ${err.message}\n`);
     throw err;
@@ -26,7 +26,9 @@ async function getProductById(id) {
 async function insertProduct(data) {
   try {
     const [result] = await db.query('INSERT INTO product (product_name, product_price) VALUES (?, ?)', [data.product_name, data.product_price]);
-    return result;
+    // Récupérer le produit créé
+    const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [result.insertId]);
+    return rows[0];
   } catch (err) {
     process.stderr.write(`Error inserting product: ${err.message}\n`);
     throw err;
@@ -36,8 +38,19 @@ async function insertProduct(data) {
 // Update product by ID
 async function updateProductById(data, id) {
   try {
-    const [result] = await db.query('UPDATE product SET product_name = ?, product_price = ? WHERE product_id = ?', [data.product_name, data.product_price, id]);
-    return result;
+    // Vérifier d'abord si le produit existe
+    const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
+    if (rows.length === 0) {
+      return null;
+    }
+
+    // Mettre à jour le produit
+    await db.query('UPDATE product SET product_name = ?, product_price = ? WHERE product_id = ?', 
+      [data.product_name, data.product_price, id]);
+
+    // Récupérer le produit mis à jour
+    const [updatedRows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
+    return updatedRows[0];
   } catch (err) {
     process.stderr.write(`Error updating product: ${err.message}\n`);
     throw err;

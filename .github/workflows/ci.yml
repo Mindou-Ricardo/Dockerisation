@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main ]
   pull_request:
-    branches: [main, develop]
+    branches: [ main ]
 
 jobs:
   test-and-lint:
@@ -14,8 +14,18 @@ jobs:
       contents: write
       pull-requests: write
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: pos_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
 
@@ -23,13 +33,13 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v2
         with:
-          node-version: "20"
+          node-version: '18'
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Auto-fix linting issues
         run: |
@@ -56,14 +66,26 @@ jobs:
           echo "Checking database tables..."
           docker compose exec db mysql -h localhost -u root -ptest pos_db -e "SHOW TABLES;"
 
-      - name: Run tests
-        run: npm test || true
-        env:
-          DB_HOST: db
-          DB_USER: root
-          DB_PASSWORD: test
-          DB_NAME: pos_db
-          DB_PORT: 3306
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run functional tests
+        run: npm run test:functional
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Run end-to-end tests
+        run: npm run test:e2e
+
+      - name: Generate test coverage
+        run: npm run test:coverage
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: coverage/
 
       - name: Stop services
         if: always()
@@ -92,22 +114,22 @@ jobs:
         run: npm audit || true
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v2
         with:
           name: build
-          path: |
-            dist/
-            docker-compose.yml
-            Dockerfile
-            init.sql
+          path: dist/
 
       - name: Verify build artifacts
         run: |
-          echo "Verifying build artifacts..."
+          echo "Checking build artifacts..."
           ls -la dist/
-          echo "Build artifacts verified successfully"
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not found"
+            exit 1
+          fi
 
       - name: Notify completion
         run: |
-          echo "CI pipeline completed successfully"
-          echo "Build artifacts are available in the artifacts section"
+          echo "CI pipeline completed successfully!"
+          echo "Build artifacts are available in the dist/ directory"
+          echo "Test coverage report is available in the coverage/ directory"

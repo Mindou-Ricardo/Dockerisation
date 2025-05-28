@@ -8,6 +8,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest",
+    "test:unit": "jest __tests__/unit",
+    "test:functional": "jest __tests__/functional",
+    "test:integration": "jest __tests__/integration",
+    "test:e2e": "jest __tests__/e2e",
+    "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "build": "npm run build:prod",
     "build:prod": "babel src -d dist"
@@ -24,7 +29,9 @@
     "@babel/cli": "^7.24.0",
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
+    "@types/jest": "^29.5.14",
     "eslint": "^8.57.0",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "supertest": "^7.1.1"
   }
 }

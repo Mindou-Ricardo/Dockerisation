@@ -4,7 +4,7 @@ const {
   insertProduct,
   updateProductById,
   deleteProductById,
-} = require("../models/ProductModel.js");
+} = require('../models/ProductModel.js');
 
 // Get all products
 const showProducts = async (req, res) => {

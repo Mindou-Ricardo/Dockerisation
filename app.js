@@ -8,6 +8,7 @@ app.use(express.json());
 app.use(cors());
 app.use(Router);
 
+// Démarrer le serveur
 app.listen(port, () => {
   process.stdout.write(`Server started on port: ${port}\n`);
 });

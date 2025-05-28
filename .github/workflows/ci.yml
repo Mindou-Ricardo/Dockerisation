@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0.39 # Aligné avec docker-compose.yml
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: pos_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        volumes:
+          - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Monter init.sql si nécessaire
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # Aligné avec node:20.16.0 du Dockerfile
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h localhost -u root -ptest --silent; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Run tests
+        run: npm test
+        env:
+          DB_HOST: localhost
+          DB_USER: root
+          DB_PASSWORD: test # Aligné avec docker-compose.yml
+          DB_NAME: pos_db # Aligné avec docker-compose.yml
+          DB_PORT: 3306
+
+      - name: Build application
+        run: npm run build
+
+      - name: Security audit
+        run: npm audit || true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-app:latest .
+
+      - name: Test with docker-compose
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 10 # Attendre que les services démarrent
+          curl --fail http://localhost:3000 || exit 1
+          docker-compose -f docker-compose.yml down

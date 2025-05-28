@@ -9,6 +9,5 @@ app.use(cors());
 app.use(Router);
 
 app.listen(port, () => {
-  //console.log(`Le serveur est démarré sur: http://localhost:${port}`);
-  console.log(`Le serveur est démarré sur: ${port}`);
+  process.stdout.write(`Server started on port: ${port}\n`);
 });

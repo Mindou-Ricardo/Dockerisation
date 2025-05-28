@@ -6,7 +6,7 @@ async function getProducts() {
     const [rows] = await db.query('SELECT * FROM product');
     return rows;
   } catch (err) {
-    console.error('Error querying products', err);
+    process.stderr.write(`Error querying products: ${err.message}\n`);
     throw err;
   }
 }
@@ -17,7 +17,7 @@ async function getProductById(id) {
     const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
     return rows[0];
   } catch (err) {
-    console.error('Error querying product by ID', err);
+    process.stderr.write(`Error querying product by ID: ${err.message}\n`);
     throw err;
   }
 }
@@ -28,7 +28,7 @@ async function insertProduct(data) {
     const [result] = await db.query('INSERT INTO product (product_name, product_price) VALUES (?, ?)', [data.product_name, data.product_price]);
     return result;
   } catch (err) {
-    console.error('Error inserting product', err);
+    process.stderr.write(`Error inserting product: ${err.message}\n`);
     throw err;
   }
 }
@@ -39,7 +39,7 @@ async function updateProductById(data, id) {
     const [result] = await db.query('UPDATE product SET product_name = ?, product_price = ? WHERE product_id = ?', [data.product_name, data.product_price, id]);
     return result;
   } catch (err) {
-    console.error('Error updating product', err);
+    process.stderr.write(`Error updating product: ${err.message}\n`);
     throw err;
   }
 }
@@ -50,7 +50,7 @@ async function deleteProductById(id) {
     const [result] = await db.query('DELETE FROM product WHERE product_id = ?', [id]);
     return result;
   } catch (err) {
-    console.error('Error deleting product', err);
+    process.stderr.write(`Error deleting product: ${err.message}\n`);
     throw err;
   }
 }

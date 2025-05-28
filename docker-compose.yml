@@ -16,11 +16,15 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   db:
     image: mysql:8.0.39
-    command: --default-authentication-plugin=mysql_native_password
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_connections=1000
     environment:
       MYSQL_ROOT_PASSWORD: test
       MYSQL_DATABASE: pos_db
@@ -36,6 +40,7 @@ services:
       timeout: 10s
       retries: 20
     restart: unless-stopped
+    mem_limit: 512m
 
 volumes:
   db_data:

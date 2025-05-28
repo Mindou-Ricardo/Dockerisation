@@ -10,25 +10,13 @@ jobs:
   test-and-lint:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8.0.39 # Aligné avec docker-compose.yml
-        env:
-          MYSQL_ROOT_PASSWORD: test
-          MYSQL_DATABASE: pos_db
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-        volumes:
-          - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Monter init.sql si nécessaire
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Aligné avec node:20.16.0 du Dockerfile
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
@@ -37,21 +25,27 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Wait for MySQL
+      - name: Start services with docker-compose
         run: |
-          until mysqladmin ping -h localhost -u root -ptest --silent; do
-            echo "Waiting for MySQL..."
-            sleep 2
-          done
+          docker-compose -f docker-compose.yml up -d
+          sleep 20  # Attendre que MySQL et l'API démarrent (ajustez si nécessaire)
+
+      - name: Verify MySQL
+        run: |
+          mysql -h localhost -u root -ptest pos_db -e "SHOW TABLES;"
 
       - name: Run tests
         run: npm test
         env:
           DB_HOST: localhost
           DB_USER: root
-          DB_PASSWORD: test # Aligné avec docker-compose.yml
-          DB_NAME: pos_db # Aligné avec docker-compose.yml
+          DB_PASSWORD: test
+          DB_NAME: pos_db
           DB_PORT: 3306
+
+      - name: Stop services
+        run: |
+          docker-compose -f docker-compose.yml down
 
       - name: Build application
         run: npm run build
@@ -70,11 +64,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t my-app:latest .
+          docker build -t backproduct:latest .
 
       - name: Test with docker-compose
         run: |
           docker-compose -f docker-compose.yml up -d
-          sleep 10 # Attendre que les services démarrent
+          sleep 10
           curl --fail http://localhost:3000 || exit 1
           docker-compose -f docker-compose.yml down

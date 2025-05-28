@@ -98,3 +98,14 @@ jobs:
             docker-compose.yml
             Dockerfile
             init.sql
+
+      - name: Verify build artifacts
+        run: |
+          echo "Verifying build artifacts..."
+          ls -la dist/
+          echo "Build artifacts verified successfully"
+
+      - name: Notify completion
+        run: |
+          echo "CI pipeline completed successfully"
+          echo "Build artifacts are available in the artifacts section"

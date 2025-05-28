@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const routes = require('./routes/routes');
+const { runMigration } = require('./config/database');
 //const port = 3000;
 const port = process.env.PORT || 3000;
 const app = express();
@@ -16,22 +17,22 @@ app.use((req, res) => {
 // Gestion des erreurs globales
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
-if (process.env.NODE_ENV !== 'test') {
-  const server = app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
-
-  // Gestion de l'arrêt propre du serveur
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
-    server.close(() => {
-      console.log('HTTP server closed');
-      process.exit(0);
+// Start server
+const startServer = async () => {
+  try {
+    await runMigration();
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
-  });
-}
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;

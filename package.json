@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --ignore-pattern 'dist/**/*'",
+    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**/*'",
     "test": "jest",
     "test:unit": "jest __tests__/unit",
     "test:functional": "jest __tests__/functional",

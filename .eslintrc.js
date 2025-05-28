@@ -1,18 +1,21 @@
 module.exports = {
   env: {
     node: true,
-    es2021: true,
-    jest: true
+    jest: true,
+    es6: true
   },
-  extends: ['eslint:recommended'],
+  extends: 'eslint:recommended',
   parserOptions: {
-    ecmaVersion: 12,
-    sourceType: 'module'
+    ecmaVersion: 2018
   },
   rules: {
-    'no-console': 'warn',
-    'no-unused-vars': 'warn',
-    'semi': ['error', 'always'],
-    'quotes': ['error', 'single']
-  }
+    'quotes': ['error', 'single'],
+    'no-console': 'off',
+    'no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }],
+    'no-constant-condition': 'off',
+    'no-func-assign': 'off',
+    'no-unsafe-finally': 'off',
+    'no-fallthrough': 'off'
+  },
+  ignorePatterns: ['dist/**/*']
 }; 

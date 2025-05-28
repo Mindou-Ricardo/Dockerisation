@@ -2,27 +2,25 @@ const mysql = require('mysql2/promise');
 const fs = require('fs').promises;
 const path = require('path');
 
-const config = {
+const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'test',
-  database: process.env.DB_NAME || 'pos_db',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'product_db',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
-};
+});
 
-const pool = mysql.createPool(config);
-
-// Fonction pour exécuter la migration
-async function runMigration() {
+const runMigration = async () => {
   let connection;
   try {
     connection = await pool.getConnection();
+    console.log('Connected to database');
+
     const migrationPath = path.join(__dirname, '..', 'migrations', 'create_product_table.sql');
     const migrationSQL = await fs.readFile(migrationPath, 'utf8');
     
-    // Exécuter les requêtes SQL séparément
     const queries = migrationSQL.split(';').filter(query => query.trim());
     
     for (const query of queries) {
@@ -31,16 +29,16 @@ async function runMigration() {
       }
     }
     
-    console.log('Migration executed successfully');
+    console.log('Migration completed successfully');
   } catch (error) {
-    console.error('Error executing migration:', error);
+    console.error('Migration failed:', error);
     throw error;
   } finally {
     if (connection) {
       connection.release();
     }
   }
-}
+};
 
 // Exécuter la migration au démarrage
 runMigration().catch(console.error);
@@ -55,4 +53,7 @@ pool.getConnection()
     console.error('Error connecting to the database:', err);
   });
 
-module.exports = pool; 
+module.exports = {
+  pool,
+  runMigration
+}; 

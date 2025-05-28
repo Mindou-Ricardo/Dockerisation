@@ -1,4 +1,6 @@
 const mysql = require('mysql2/promise');
+const fs = require('fs').promises;
+const path = require('path');
 
 const config = {
   host: process.env.DB_HOST || 'localhost',
@@ -11,6 +13,22 @@ const config = {
 };
 
 const pool = mysql.createPool(config);
+
+// Fonction pour exécuter la migration
+async function runMigration() {
+  try {
+    const migrationPath = path.join(__dirname, '..', 'migrations', 'create_product_table.sql');
+    const migrationSQL = await fs.readFile(migrationPath, 'utf8');
+    await pool.query(migrationSQL);
+    console.log('Migration executed successfully');
+  } catch (error) {
+    console.error('Error executing migration:', error);
+    throw error;
+  }
+}
+
+// Exécuter la migration au démarrage
+runMigration().catch(console.error);
 
 // Test de la connexion
 pool.getConnection()

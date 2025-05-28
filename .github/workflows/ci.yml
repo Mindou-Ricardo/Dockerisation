@@ -10,8 +10,6 @@ jobs:
   test-and-lint:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    container:
-      options: --cpus 2 --memory 4G
 
     steps:
       - uses: actions/checkout@v4
@@ -33,10 +31,7 @@ jobs:
 
       - name: Start services
         run: |
-          docker compose -f docker-compose.yml up -d --wait
-          docker compose ps
-          echo "MySQL logs:"
-          docker compose logs db --tail=50
+          docker compose -f docker-compose.yml up -d
           echo "Waiting for MySQL to be ready..."
           timeout 120 bash -c 'until docker compose exec db mysqladmin ping -uroot -ptest --silent; do sleep 5; echo "Waiting..."; done'
 

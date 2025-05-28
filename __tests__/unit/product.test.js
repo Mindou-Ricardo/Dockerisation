@@ -12,8 +12,8 @@ describe('Product Model Unit Tests', () => {
 
   test('getProducts should return all products', async () => {
     const mockProducts = [
-      { product_id: 1, product_name: 'Test Product 1', product_price: 10.99 },
-      { product_id: 2, product_name: 'Test Product 2', product_price: 20.99 }
+      { product_id: 1, name: 'Test Product 1', price: 10.99 },
+      { product_id: 2, name: 'Test Product 2', price: 20.99 }
     ];
     
     require('../../config/db').query.mockResolvedValue([mockProducts]);
@@ -23,7 +23,7 @@ describe('Product Model Unit Tests', () => {
   });
 
   test('getProductById should return a single product', async () => {
-    const mockProduct = { product_id: 1, product_name: 'Test Product', product_price: 10.99 };
+    const mockProduct = { product_id: 1, name: 'Test Product', price: 10.99 };
     require('../../config/db').query.mockResolvedValue([[mockProduct]]);
     
     const result = await getProductById(1);
@@ -32,8 +32,8 @@ describe('Product Model Unit Tests', () => {
 
   test('insertProduct should create a new product', async () => {
     const newProduct = {
-      product_name: 'New Product',
-      product_price: 15.99
+      name: 'New Product',
+      price: 15.99
     };
     
     const mockInsertResult = { insertId: 1 };
@@ -50,11 +50,11 @@ describe('Product Model Unit Tests', () => {
 
   test('updateProductById should update a product', async () => {
     const updateData = {
-      product_name: 'Updated Product',
-      product_price: 25.99
+      name: 'Updated Product',
+      price: 25.99
     };
     
-    const existingProduct = { product_id: 1, product_name: 'Old Product', product_price: 15.99 };
+    const existingProduct = { product_id: 1, name: 'Old Product', price: 15.99 };
     const updatedProduct = { product_id: 1, ...updateData };
     
     const db = require('../../config/db');

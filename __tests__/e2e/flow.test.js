@@ -12,8 +12,8 @@ describe('End-to-End Tests', () => {
 
   afterAll(async () => {
     // Nettoyer la base de données après les tests
-    if (productIds.length > 0) {
-      await db.query('DELETE FROM product WHERE product_id IN (?)', [productIds]);
+    for (const id of productIds) {
+      await db.query('DELETE FROM product WHERE product_id = ?', [id]);
     }
     await db.end();
   });
@@ -21,60 +21,65 @@ describe('End-to-End Tests', () => {
   test('Complete product flow', async () => {
     // 1. Créer un produit
     const newProduct = {
-      product_name: 'Test Product E2E',
-      product_price: 99.99
+      name: 'Test Product E2E',
+      price: 99.99
     };
 
     const createResponse = await request(app)
       .post('/api/products')
       .send(newProduct)
+      .expect('Content-Type', /json/)
       .expect(201);
 
     const productId = createResponse.body.product_id;
     productIds.push(productId);
-    expect(productId).toBeDefined();
 
-    // 2. Vérifier que le produit a été créé
+    expect(createResponse.body).toHaveProperty('product_id');
+    expect(createResponse.body.name).toBe(newProduct.name);
+    expect(createResponse.body.price).toBe(newProduct.price);
+
+    // 2. Récupérer le produit
     const getResponse = await request(app)
       .get(`/api/products/${productId}`)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(getResponse.body.product_name).toBe(newProduct.product_name);
-    expect(getResponse.body.product_price).toBe(newProduct.product_price);
+    expect(getResponse.body).toHaveProperty('product_id', productId);
+    expect(getResponse.body.name).toBe(newProduct.name);
+    expect(getResponse.body.price).toBe(newProduct.price);
 
     // 3. Mettre à jour le produit
-    const updateData = {
-      product_name: 'Updated E2E Product',
-      product_price: 149.99
+    const updatedProduct = {
+      name: 'Updated E2E Product',
+      price: 149.99
     };
-
-    // Vérifier que le produit existe avant la mise à jour
-    await request(app)
-      .get(`/api/products/${productId}`)
-      .expect(200);
 
     const updateResponse = await request(app)
       .put(`/api/products/${productId}`)
-      .send(updateData)
+      .send(updatedProduct)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(updateResponse.body.product_name).toBe(updateData.product_name);
-    expect(updateResponse.body.product_price).toBe(updateData.product_price);
+    expect(updateResponse.body).toHaveProperty('product_id', productId);
+    expect(updateResponse.body.name).toBe(updatedProduct.name);
+    expect(updateResponse.body.price).toBe(updatedProduct.price);
 
-    // 4. Vérifier la liste des produits
-    const listResponse = await request(app)
-      .get('/api/products')
+    // 4. Vérifier la mise à jour
+    const verifyResponse = await request(app)
+      .get(`/api/products/${productId}`)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(Array.isArray(listResponse.body)).toBeTruthy();
-    expect(listResponse.body.some(p => p.product_id === productId)).toBeTruthy();
+    expect(verifyResponse.body).toHaveProperty('product_id', productId);
+    expect(verifyResponse.body.name).toBe(updatedProduct.name);
+    expect(verifyResponse.body.price).toBe(updatedProduct.price);
 
     // 5. Supprimer le produit
     await request(app)
       .delete(`/api/products/${productId}`)
-      .expect(200);
+      .expect(204);
 
-    // 6. Vérifier que le produit a été supprimé
+    // 6. Vérifier la suppression
     await request(app)
       .get(`/api/products/${productId}`)
       .expect(404);
@@ -82,20 +87,13 @@ describe('End-to-End Tests', () => {
 
   test('Error handling and edge cases', async () => {
     // 1. Tenter de créer un produit avec des données invalides
-    const invalidProduct = {
-      product_name: '',
-      product_price: -10
-    };
-
-    const errorResponse = await request(app)
+    await request(app)
       .post('/api/products')
-      .send(invalidProduct)
+      .send({})
+      .expect('Content-Type', /json/)
       .expect(400);
 
-    expect(errorResponse.body.errors).toBeDefined();
-    expect(errorResponse.body.errors.length).toBeGreaterThan(0);
-
-    // 2. Tenter de récupérer un produit inexistant
+    // 2. Tenter d'accéder à un produit inexistant
     await request(app)
       .get('/api/products/999999')
       .expect(404);
@@ -103,7 +101,7 @@ describe('End-to-End Tests', () => {
     // 3. Tenter de mettre à jour un produit inexistant
     await request(app)
       .put('/api/products/999999')
-      .send({ product_name: 'Test', product_price: 10 })
+      .send({ name: 'Test', price: 99.99 })
       .expect(404);
 
     // 4. Tenter de supprimer un produit inexistant

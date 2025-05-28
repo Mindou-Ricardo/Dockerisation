@@ -16,14 +16,29 @@ const pool = mysql.createPool(config);
 
 // Fonction pour exécuter la migration
 async function runMigration() {
+  let connection;
   try {
+    connection = await pool.getConnection();
     const migrationPath = path.join(__dirname, '..', 'migrations', 'create_product_table.sql');
     const migrationSQL = await fs.readFile(migrationPath, 'utf8');
-    await pool.query(migrationSQL);
+    
+    // Exécuter les requêtes SQL séparément
+    const queries = migrationSQL.split(';').filter(query => query.trim());
+    
+    for (const query of queries) {
+      if (query.trim()) {
+        await connection.query(query);
+      }
+    }
+    
     console.log('Migration executed successfully');
   } catch (error) {
     console.error('Error executing migration:', error);
     throw error;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 }
 

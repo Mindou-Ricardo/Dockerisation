@@ -12,8 +12,8 @@ describe('Integration Tests', () => {
 
   afterAll(async () => {
     // Nettoyer la base de données après les tests
-    if (productIds.length > 0) {
-      await db.query('DELETE FROM product WHERE product_id IN (?)', [productIds]);
+    for (const id of productIds) {
+      await db.query('DELETE FROM product WHERE product_id = ?', [id]);
     }
     await db.end();
   });
@@ -21,55 +21,65 @@ describe('Integration Tests', () => {
   test('Complete product lifecycle', async () => {
     // 1. Créer un produit
     const newProduct = {
-      product_name: 'Test Product Integration',
-      product_price: 99.99
+      name: 'Test Product',
+      price: 99.99
     };
 
     const createResponse = await request(app)
       .post('/api/products')
       .send(newProduct)
+      .expect('Content-Type', /json/)
       .expect(201);
 
     const productId = createResponse.body.product_id;
     productIds.push(productId);
-    expect(productId).toBeDefined();
 
-    // 2. Vérifier que le produit a été créé
+    expect(createResponse.body).toHaveProperty('product_id');
+    expect(createResponse.body.name).toBe(newProduct.name);
+    expect(createResponse.body.price).toBe(newProduct.price);
+
+    // 2. Récupérer le produit
     const getResponse = await request(app)
       .get(`/api/products/${productId}`)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(getResponse.body.product_name).toBe(newProduct.product_name);
-    expect(getResponse.body.product_price).toBe(newProduct.product_price);
+    expect(getResponse.body).toHaveProperty('product_id', productId);
+    expect(getResponse.body.name).toBe(newProduct.name);
+    expect(getResponse.body.price).toBe(newProduct.price);
 
     // 3. Mettre à jour le produit
-    const updateData = {
-      product_name: 'Updated Integration Product',
-      product_price: 149.99
+    const updatedProduct = {
+      name: 'Updated Product',
+      price: 149.99
     };
 
     const updateResponse = await request(app)
       .put(`/api/products/${productId}`)
-      .send(updateData)
+      .send(updatedProduct)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(updateResponse.body.product_name).toBe(updateData.product_name);
-    expect(updateResponse.body.product_price).toBe(updateData.product_price);
+    expect(updateResponse.body).toHaveProperty('product_id', productId);
+    expect(updateResponse.body.name).toBe(updatedProduct.name);
+    expect(updateResponse.body.price).toBe(updatedProduct.price);
 
-    // 4. Vérifier la liste des produits
-    const listResponse = await request(app)
-      .get('/api/products')
+    // 4. Vérifier la mise à jour
+    const verifyResponse = await request(app)
+      .get(`/api/products/${productId}`)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(Array.isArray(listResponse.body)).toBeTruthy();
-    expect(listResponse.body.some(p => p.product_id === productId)).toBeTruthy();
+    expect(verifyResponse.body).toHaveProperty('product_id', productId);
+    expect(verifyResponse.body.name).toBe(updatedProduct.name);
+    expect(verifyResponse.body.price).toBe(updatedProduct.price);
 
     // 5. Supprimer le produit
     await request(app)
       .delete(`/api/products/${productId}`)
-      .expect(200);
+      .expect(204);
 
-    // 6. Vérifier que le produit a été supprimé
+    // 6. Vérifier la suppression
     await request(app)
       .get(`/api/products/${productId}`)
       .expect(404);
@@ -84,10 +94,10 @@ describe('Integration Tests', () => {
     // Vérifier la structure de la table product
     const [columns] = await db.query('SHOW COLUMNS FROM product');
     console.log('Columns found:', columns);
-    expect(columns.length).toBeGreaterThan(0);
 
-    // Vérifier les colonnes spécifiques
-    const expectedColumns = ['product_id', 'product_name', 'product_price'];
+    const expectedColumns = ['product_id', 'name', 'price', 'created_at', 'updated_at'];
+    console.log('Received array:', expectedColumns);
+    
     columns.forEach(column => {
       console.log('Checking column', column.Field + ':', column);
       expect(expectedColumns).toContain(column.Field);

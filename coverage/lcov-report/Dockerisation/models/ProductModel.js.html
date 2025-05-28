@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.75% </span>
+                <span class="strong">72.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>22/32</span>
+                <span class='fraction'>26/36</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.75% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>22/32</span>
+                <span class='fraction'>25/35</span>
             </div>
         
             
@@ -140,13 +140,31 @@
 <a name='L75'></a><a href='#L75'>75</a>
 <a name='L76'></a><a href='#L76'>76</a>
 <a name='L77'></a><a href='#L77'>77</a>
-<a name='L78'></a><a href='#L78'>78</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -155,9 +173,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -219,11 +237,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const db = require('../config/db');
 &nbsp;
+// Fonction utilitaire pour convertir les données du produit
+const convertProductData = (product) =&gt; {
+  if (!product) return null;
+  return {
+    ...product,
+    price: parseFloat(product.price)
+  };
+};
+&nbsp;
 // Get all products
 async function getProducts() {
   try {
     const [rows] = await db.query('SELECT * FROM product');
-    return rows;
+    return rows.map(convertProductData);
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    process.stderr.write(`Error querying products: ${err.message}\n`);</span>
 <span class="cstat-no" title="statement not covered" >    throw err;</span>
@@ -234,7 +261,7 @@ async function getProducts() {
 async function getProductById(id) {
   try {
     const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
-    return rows[0] || null;
+    return convertProductData(rows[0]);
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    process.stderr.write(`Error querying product by ID: ${err.message}\n`);</span>
 <span class="cstat-no" title="statement not covered" >    throw err;</span>
@@ -244,10 +271,10 @@ async function getProductById(id) {
 // Insert a new product
 async function insertProduct(data) {
   try {
-    const [result] = await db.query('INSERT INTO product (product_name, product_price) VALUES (?, ?)', [data.product_name, data.product_price]);
+    const [result] = await db.query('INSERT INTO product (name, price) VALUES (?, ?)', [data.name, data.price]);
     // Récupérer le produit créé
     const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [result.insertId]);
-    return rows[0];
+    return convertProductData(rows[0]);
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    process.stderr.write(`Error inserting product: ${err.message}\n`);</span>
 <span class="cstat-no" title="statement not covered" >    throw err;</span>
@@ -264,12 +291,12 @@ async function updateProductById(data, id) {
     }
 &nbsp;
     // Mettre à jour le produit
-    await db.query('UPDATE product SET product_name = ?, product_price = ? WHERE product_id = ?', 
-      [data.product_name, data.product_price, id]);
+    await db.query('UPDATE product SET name = ?, price = ? WHERE product_id = ?', 
+      [data.name, data.price, id]);
 &nbsp;
     // Récupérer le produit mis à jour
     const [updatedRows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
-    return updatedRows[0];
+    return convertProductData(updatedRows[0]);
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    process.stderr.write(`Error updating product: ${err.message}\n`);</span>
 <span class="cstat-no" title="statement not covered" >    throw err;</span>
@@ -301,7 +328,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-28T12:26:41.059Z
+                at 2025-05-28T12:49:31.032Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

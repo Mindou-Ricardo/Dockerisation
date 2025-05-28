@@ -10,13 +10,13 @@ const {
 const validateProduct = (data) => {
   const errors = [];
   
-  if (!data.product_name || data.product_name.trim() === '') {
+  if (!data.name || data.name.trim() === '') {
     errors.push('Product name is required');
   }
   
-  if (data.product_price === undefined || data.product_price === null) {
+  if (data.price === undefined || data.price === null) {
     errors.push('Product price is required');
-  } else if (isNaN(data.product_price) || data.product_price < 0) {
+  } else if (isNaN(data.price) || data.price < 0) {
     errors.push('Product price must be a positive number');
   }
   
@@ -92,7 +92,7 @@ const deleteProduct = async (req, res) => {
     const id = req.params.id;
     const results = await deleteProductById(id);
     if (results.affectedRows > 0) {
-      res.json(results);
+      res.status(204).send();
     } else {
       res.status(404).json({ error: 'Product not found' });
     }

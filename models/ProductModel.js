@@ -1,10 +1,19 @@
 const db = require('../config/db');
 
+// Fonction utilitaire pour convertir les données du produit
+const convertProductData = (product) => {
+  if (!product) return null;
+  return {
+    ...product,
+    price: parseFloat(product.price)
+  };
+};
+
 // Get all products
 async function getProducts() {
   try {
     const [rows] = await db.query('SELECT * FROM product');
-    return rows;
+    return rows.map(convertProductData);
   } catch (err) {
     process.stderr.write(`Error querying products: ${err.message}\n`);
     throw err;
@@ -15,7 +24,7 @@ async function getProducts() {
 async function getProductById(id) {
   try {
     const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
-    return rows[0] || null;
+    return convertProductData(rows[0]);
   } catch (err) {
     process.stderr.write(`Error querying product by ID: ${err.message}\n`);
     throw err;
@@ -25,10 +34,10 @@ async function getProductById(id) {
 // Insert a new product
 async function insertProduct(data) {
   try {
-    const [result] = await db.query('INSERT INTO product (product_name, product_price) VALUES (?, ?)', [data.product_name, data.product_price]);
+    const [result] = await db.query('INSERT INTO product (name, price) VALUES (?, ?)', [data.name, data.price]);
     // Récupérer le produit créé
     const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [result.insertId]);
-    return rows[0];
+    return convertProductData(rows[0]);
   } catch (err) {
     process.stderr.write(`Error inserting product: ${err.message}\n`);
     throw err;
@@ -45,12 +54,12 @@ async function updateProductById(data, id) {
     }
 
     // Mettre à jour le produit
-    await db.query('UPDATE product SET product_name = ?, product_price = ? WHERE product_id = ?', 
-      [data.product_name, data.product_price, id]);
+    await db.query('UPDATE product SET name = ?, price = ? WHERE product_id = ?', 
+      [data.name, data.price, id]);
 
     // Récupérer le produit mis à jour
     const [updatedRows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
-    return updatedRows[0];
+    return convertProductData(updatedRows[0]);
   } catch (err) {
     process.stderr.write(`Error updating product: ${err.message}\n`);
     throw err;
